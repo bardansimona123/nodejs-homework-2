@@ -1,63 +1,62 @@
-const fs = require('fs/promises')
-const path = require('path')
+const mongoose = require('mongoose');
 
-const contactsPath = path.join(__dirname, 'contacts.json')
-console.log('Contacts path:', contactsPath);
+// Definirea schema pentru contacte
+const contactSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: [true, 'Set name for contact'],
+  },
+  email: {
+    type: String,
+  },
+  phone: {
+    type: String,
+  },
+  favorite: {
+    type: Boolean,
+    default: false,
+  },
+});
+
+const Contact = mongoose.model('Contact', contactSchema);
+
+// Funcții de CRUD folosind Mongoose
 const listContacts = async () => {
-  try {
-    const data = await fs.readFile(contactsPath, 'utf-8');
-    console.log('Data read from file:', data); // Adăugați acest log pentru a verifica ce este citit
-    return JSON.parse(data); // Încercați să parsezi JSON-ul
-  } catch (error) {
-    console.error('Error reading contacts:', error);
-    if (error.code === 'ENOENT') {
-      return []; 
-    }
-    throw error; 
-  }
+  return await Contact.find();
 };
 
 const getContactById = async (contactId) => {
-  const contacts = await listContacts()
-  return contacts.find(contact => contact.id === contactId)
-}
-
-const removeContact = async (contactId) => {
-  const contacts = await listContacts()
-  const index = contacts.findIndex(contact => contact.id === contactId)
-  if (index === -1) return null
-
-  const [deletedContact] = contacts.splice(index, 1)
-  await fs.writeFile(contactsPath, JSON.stringify(contacts, null, 2))
-  return deletedContact
-}
+  return await Contact.findById(contactId);
+};
 
 const addContact = async (body) => {
-  const contacts = await listContacts()
-  const newContact = { ...body, id: generateId() }
-  contacts.push(newContact)
-  await fs.writeFile(contactsPath, JSON.stringify(contacts, null, 2))
-  return newContact
-}
+  const newContact = new Contact(body);
+  await newContact.save();
+  return newContact;
+};
+
+const removeContact = async (contactId) => {
+  return await Contact.findByIdAndRemove(contactId);
+};
 
 const updateContact = async (contactId, body) => {
-  const contacts = await listContacts()
-  const contact = contacts.find(contact => contact.id === contactId)
-  if (!contact) return null
+  return await Contact.findByIdAndUpdate(contactId, body, { new: true });
+};
 
-  Object.assign(contact, body)
-  await fs.writeFile(contactsPath, JSON.stringify(contacts, null, 2))
-  return contact
-}
-
-const generateId = () => {
-  return Math.random().toString(36).substr(2, 9) // Basic random ID generator
-}
+// Funcție pentru actualizarea statutului favorite
+const updateStatusContact = async (contactId, body) => {
+  return await Contact.findByIdAndUpdate(
+    contactId,
+    { favorite: body.favorite },
+    { new: true }
+  );
+};
 
 module.exports = {
   listContacts,
   getContactById,
-  removeContact,
   addContact,
-  updateContact
-}
+  removeContact,
+  updateContact,
+  updateStatusContact,
+};

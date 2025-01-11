@@ -1,6 +1,6 @@
 const express = require("express");
 const Joi = require("joi");
-const { listContacts, getContactById, addContact, removeContact } = require("../../models/contacts");
+const { listContacts, getContactById, addContact, removeContact, updateStatusContact } = require("../../models/contacts");
 
 const router = express.Router();
 
@@ -58,6 +58,26 @@ router.delete("/:id", async (req, res) => {
       return res.status(404).json({ message: "Contact not found" });
     }
     res.status(200).json({ message: "Contact deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// PATCH /api/contacts/:contactId/favorite - pentru a actualiza statutul favorite
+router.patch("/:contactId/favorite", async (req, res) => {
+  const { contactId } = req.params;
+  const { favorite } = req.body;
+
+  if (favorite === undefined) {
+    return res.status(400).json({ message: "missing field favorite" });
+  }
+
+  try {
+    const updatedContact = await updateStatusContact(contactId, { favorite });
+    if (!updatedContact) {
+      return res.status(404).json({ message: "Not found" });
+    }
+    res.status(200).json(updatedContact);
   } catch (error) {
     res.status(500).json({ message: "Server error" });
   }
