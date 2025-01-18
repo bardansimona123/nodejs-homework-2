@@ -2,7 +2,6 @@ const express = require("express");
 const cors = require("cors");
 const path = require("path");
 const mongoose = require("mongoose");
-const contactsRouter = require("./routes/api/contacts");
 const usersRouter = require("./routes/api/users");
 
 const app = express();
@@ -29,7 +28,7 @@ app.use((req, res, next) => {
 });
 
 // Rute
-app.use("/api/contacts", contactsRouter);
+
 app.use("/api/users", usersRouter);
 
 module.exports = app;

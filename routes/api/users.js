@@ -2,7 +2,6 @@ const express = require("express");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs/promises");
-const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const Jimp = require("jimp");
 const Joi = require("joi");
@@ -64,7 +63,6 @@ router.post("/signup", async (req, res) => {
 
     const user = new User({ email, password });
     await user.save();
-    console.log('User saved:', user);
 
     res.status(201).json({
       message: "Registration successful", 
@@ -77,8 +75,6 @@ router.post("/signup", async (req, res) => {
 
 // Endpoint de login
 router.post("/login", async (req, res) => {
-  console.log("Login attempt:", req.body);
-
   const schema = Joi.object({
     email: Joi.string().email().required(),
     password: Joi.string().min(6).required(),
@@ -93,10 +89,8 @@ router.post("/login", async (req, res) => {
     const user = await User.findOne({ email });
     if (!user) return res.status(401).json({ message: "Invalid email or password" });
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    console.log('Password entered by user:', password);
-    console.log('Hashed password from DB:', user.password);
-    console.log('Password comparison result:', isPasswordValid);
+    // Folosește metoda matchPassword definită în schema User pentru a compara parolele
+    const isPasswordValid = await user.matchPassword(password);
 
     if (!isPasswordValid) {
       return res.status(401).json({ message: "Invalid password" });
@@ -122,7 +116,6 @@ router.use(authenticate);
 // Ruta pentru a actualiza avatarul utilizatorului
 router.patch(
   "/avatars",
-  authenticate,
   upload.single("avatar"),
   async (req, res, next) => {
     try {
